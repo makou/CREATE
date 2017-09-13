@@ -1,0 +1,150 @@
+[comment encoding = UTF-8 /]
+[module App('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/SearchLayerPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/ExternalServiceLayerPSMMetamodel.ecore')]
+
+
+[template public generateApp(anAnnotationStack : AnnotationStack)]
+
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/app.js', false, 'UTF-8')]
+
+/**
+* @ngdoc object
+* @name [anAnnotationStack.hasCorePSM.name/]App
+* @description 
+*
+* [anAnnotationStack.hasCorePSM.name/]App is a tool that creates grafical user interfaces for restful services 
+* produced by S-case. The application is basically based in the restful nature of the services, where 
+* every returnig resource, exept it's properties, carries a list with all the resources tha could be reached
+* from it. In addition to that, each one of the listed resources is bounded with one CRUD action. This means
+* that the application will know in every step what kind of action the user wills to make. 
+*/
+angular
+  .module('[anAnnotationStack.hasCorePSM.name/]App', ['['/]'ngRoute', 'ngResource', 'ui-notification', 'naif.base64'])
+
+  .config(['['/]'$routeProvider', function ($routeProvider) {
+	[if (anAnnotationStack.getMainResources()->size()>1)]
+	$routeProvider.when('/', { templateUrl: 'templates/main.html' });
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	$routeProvider.when('/[p.parentName/]', { templateUrl: 'templates/[p.parentName/].html' });
+	$routeProvider.when('/[p.parentName/]Detail', { templateUrl: 'templates/[p.parentName/]Detail.html' });
+	[/for]
+	[else]
+	[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+	[if (anAnnotationStack.getMainResources()->at(1).parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	$routeProvider.when('/', { templateUrl: 'templates/signin.html' });
+	[else]
+	$routeProvider.when('/', { templateUrl: 'templates/[anAnnotationStack.getMainResources().parentName/].html' });
+	[/if]
+	[else]
+	$routeProvider.when('/', { templateUrl: 'templates/[anAnnotationStack.getMainResources().parentName/].html' });
+	[/if]
+	$routeProvider.when('/new[anAnnotationStack.getMainResources().parentName.toUpperFirst()/]', { templateUrl: 'templates/[anAnnotationStack.getMainResources().parentName.toUpperFirst()/].html' });
+	$routeProvider.when('/[anAnnotationStack.getMainResources().parentName.toUpperFirst()/]Detail', { templateUrl: 'templates/[anAnnotationStack.getMainResources().parentName.toUpperFirst()/]Detail.html' });
+	[/if]
+	[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+	$routeProvider.when('/new[p.parentName.toUpperFirst()/]', { templateUrl: 'templates/new[p.parentName.toUpperFirst()/].html' });
+	[/for]
+    [if (anAnnotationStack.bHasAuthenticationAnnotation)]
+    $routeProvider.when('/login', { templateUrl: 'templates/signin.html' });
+    $routeProvider.when('/signup', { templateUrl: 'templates/signin.html' });
+	$routeProvider.when('/[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]', { templateUrl: 'templates/[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/].html' });
+    [/if]
+    [if (anAnnotationStack.bHasSearchLayer)]
+	[for (aSearchControler : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+    $routeProvider.when('/[aSearchControler.isSearchController.annotatesJavaAlgoController.parentName/]', { templateUrl: 'templates/[aSearchControler.isSearchController.annotatesJavaAlgoController.parentName/].html' });
+    [/for][/if]
+	[for (p : JavaResourceModelManager | anAnnotationStack.hasCorePSM.hasJavaRMManager)]
+	[if (anAnnotationStack.relatedResource(p.hasRelatedJavaRModel)->size()>0)]
+	$routeProvider.when('/[p.parentName/]Detail', { templateUrl: 'templates/[p.parentName/]Detail.html' });
+	[/if]
+	[/for]
+	[if (anAnnotationStack.bHasExternalServiceLayer)]
+	[for (a : JavaRESTClientController | anAnnotationStack.getJavaRESTClientControllerAnnotations())]
+	$routeProvider.when('/[a.isJavaRESTClientController.annotatesJavaAlgoController.parentName/]', { templateUrl: 'templates/[a.isJavaRESTClientController.annotatesJavaAlgoController.parentName/].html' });
+	[/for]
+	[/if]
+    $routeProvider.otherwise({ template: "<h1>None</h1><p>Nothing has been selected,</p>" })
+
+  }])
+
+
+  .constant('config', {
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	[if(anAnnotationStack.bHasAuthenticationAnnotation)]
+	[if not(p.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	[p.parentName/]Url: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api/[p.parentName/]',
+	[/if]
+	[else]
+	[p.parentName/]Url: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api/[p.parentName/]',
+	[/if]
+	[/for]
+    [if (anAnnotationStack.bHasAuthenticationAnnotation)]
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	[if (p.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	signInUrl: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api/[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]',
+	[comment]	[else]
+	[for (aRelatedResource : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	[if (aRelatedResource.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	[p.parentName/]Url: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api/[p.parentName/]',
+	[/if]
+	[/for][/comment]
+	[/if]
+	[/for]
+    [/if]
+	[if (anAnnotationStack.bHasSearchLayer)]
+	[for (a : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+	[a.isSearchController.annotatesJavaAlgoController.parentName/]Url: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api[a.isSearchController.annotatesJavaAlgoController.controllerURI/]',
+	[/for]
+	[/if]
+    [if (anAnnotationStack.bHasExternalServiceLayer)]
+	[for (a : JavaRESTClientController | anAnnotationStack.getJavaRESTClientControllerAnnotations())]
+	[a.isJavaRESTClientController.annotatesJavaAlgoController.parentName/]Url: 'http://localhost:8085/[anAnnotationStack.hasCorePSM.name/]/api[a.isJavaRESTClientController.annotatesJavaAlgoController.controllerURI/]',
+    [/for]
+	[/if]
+  })
+
+  .config(function (NotificationProvider) {
+    NotificationProvider.setOptions({
+      delay: 2000,
+      startTop: 20,
+      startRight: 10,
+      verticalSpacing: 20,
+      horizontalSpacing: 20,
+      positionX: 'center',
+      positionY: 'top'
+    })
+  })
+
+
+[/file]
+[/template]
+[query private relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]
+
+[query private getSearchControllerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(SearchController) =
+	anAnnotationStack.hasSearchLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(SearchController))->asSequence()
+/]
+
+[query private getSearchableResources(jAlgoRC : JavaAlgoResourceController, anAnnotationStack : AnnotationStack) : Sequence(SearchableJavaResourceModel) =
+   jAlgoRC.getSearchHTTPHandler(anAnnotationStack).searchesJavaResourceModel->asSequence()
+/]
+
+[query private getSearchHTTPHandler(jAlgoRC : JavaAlgoResourceController, anAnnotationStack : AnnotationStack) : SearchHTTPHandler =
+	getSearchHTTPHandlerAnnotations(anAnnotationStack)->select(SearchHTTPHandlerAnnotation | jAlgoRC.JavaAlgoRControllerHasHTTPActivity.hasHTTPActivityHandler->includes(SearchHTTPHandlerAnnotation.isHTTPActivityHandler.annotatesHTTPActivityHandler))->at(1)
+/]
+
+[query private getSearchHTTPHandlerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(SearchHTTPHandler) =
+	anAnnotationStack.hasSearchLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(SearchHTTPHandler))->asSequence()
+/]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+	anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query private getMainResources(anAnnotationStack: AnnotationStack): OrderedSet(JavaResourceModelManager) = 
+(anAnnotationStack.hasCorePSM.hasJavaRMManager-anAnnotationStack.hasCorePSM.hasJavaRMManager->intersection(anAnnotationStack.hasCorePSM.hasJavaRModel.hasRelatedJavaRMManager->asOrderedSet()))->asOrderedSet()
+/]
+
+[query private getJavaRESTClientControllerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(JavaRESTClientController) =
+	anAnnotationStack.hasExternalServiceLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(JavaRESTClientController))->asSequence()
+/]

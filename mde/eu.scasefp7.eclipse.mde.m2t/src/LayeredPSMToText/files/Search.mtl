@@ -1,0 +1,310 @@
+[comment encoding = UTF-8 /]
+[module Search('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/SearchLayerPSMMetamodel.ecore')]
+
+
+[template public generateSearch(anAnnotationStack : AnnotationStack)]
+[if (anAnnotationStack.bHasSearchLayer)]
+
+[for (a : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + a.isSearchController.annotatesJavaAlgoController.parentName + '.controller.js', false, 'UTF-8')]
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller
+* @description:
+*
+* This is the controller responsible to make the HTTP calls to search 
+* the database and displaying the results according to the user's choices. 
+**/
+
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller', [a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Search);
+
+function [a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Search($scope, dataService, config, $location, $window, $rootScope, $route, Notification) {
+      links = ['['/]];
+    $scope.clearResult = clearResult;
+    $scope.list = ['['/]];
+	[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+	[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+	[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+	 $scope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Results = ['['/]];
+	[/for]
+	[/if]
+	[/for]
+   	
+	$scope.checkboxes = ['['/]	
+	[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+	[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+	[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+	[for (c : SearchableProperty | aSearchableJavaResourceModel.hasSearchableProperty)]
+        { checked: false, value: "[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/] [c.isSearchableProperty.annotatesPSMComponentProperty.name.toUpperFirst()/]", url_key: "search[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/][c.isSearchableProperty.annotatesPSMComponentProperty.name.toUpperFirst()/]" },
+	[/for]
+	[/for]
+	[/if]
+	[/for]
+	];
+
+    $scope.checkAll = function () {
+        for (var i = 0; i < $scope.checkboxes.length; i++) {
+            $scope.checkboxes['['/]i].checked = true;
+        }
+    };
+
+    $scope.uncheckAll = function () {
+        for (var i = 0; i < $scope.checkboxes.length; i++) {
+            $scope.checkboxes['['/]i].checked = false;
+        }
+    };
+
+	$scope.search = function () {
+        var urlParams = "";
+        for (var i = 0; i < $scope.checkboxes.length; i++) {
+            if ($scope.checkboxes['['/]i].checked) {
+                urlParams = urlParams + $scope.checkboxes['['/]i].url_key + '=true&'
+            }
+        }
+        var urlParams = urlParams + "searchKeyword=" + $scope.searchKeyword;
+        searchFn(urlParams);
+    };
+
+	/**
+	* @ngdoc method
+	* @name searchFn
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is called from search(). It sends an HTTP GET request with the parameters that have been defined 
+    *and processes the response in order to display the results.
+	**/
+    function searchFn(params) {
+        links = ['['/]];
+        var link = config.[a.isSearchController.annotatesJavaAlgoController.parentName/]Url + '?' + params;
+	[for (httpActivity : HTTPActivity | a.isSearchController.annotatesJavaAlgoController.JavaAlgoRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'GET')]
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation) ][if ( httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](link).getall(function (data)[/if][/for] {
+            var checkResultList = angular.isUndefined(data.linklist)
+            if (checkResultList == true) {
+                console.log("Nothing to show")
+                Notification.error("No results")
+            }else {
+                var isArray = angular.isArray(data.linklist)
+                if (isArray == false) {
+				[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+				[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+				[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+					if (data.linklist.linkType == '[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]') {
+                            dataService.data(data.linklist.linkURI).getall(function(info){
+                                $scope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Results.push(info)
+                            })
+							$scope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/] = true;
+					}
+				[/for][/if][/for]
+                } else {
+                    angular.forEach(data.linklist, function (link) {
+						[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+						[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+						[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+						if (link.linkType == '[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]') {
+                            dataService.data(link.linkURI).getall(function(info){
+                                $scope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Results.push(info)
+                            })
+							$scope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/] = true;
+						}
+				[/for][/if][/for]
+                    })
+                }
+            }
+        })
+    }
+	[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+	[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+	[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+	/**
+	* @ngdoc method
+	* @name goTo[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/]Detail
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is called from the view. If the resource has subresources it is called in order the user to navigate
+    *to the subresources.It Searchs in the list of instances of the resource and holds the URL in the rootscope varibale
+    *$rootScope.recipe
+	**/
+	
+	$scope.goTo[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/]Details = function (itemId){
+        dataService.data(config.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Url).getall(function(data){
+            angular.forEach(data.linklist, function(item){
+                if(item.idType == itemId){
+                  $rootScope.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Url = item.linkURI
+                  $location.path("/[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Detail");
+                }
+            })
+        })
+    }
+	[/for][/if][/for]
+
+	/**
+	* @ngdoc method
+	* @name clearResult
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is called from the view when the user ckecks to clear the search results
+	**/
+    function clearResult(searchValue) {
+        searchValue = '';
+        $scope.list = ['['/]];
+        $route.reload();
+
+    };
+	
+};
+[/file]
+[/for]
+
+[for (a : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/' + a.isSearchController.annotatesJavaAlgoController.parentName + '.html', false, 'UTF-8')]
+<div class=" ui container" ng-controller="[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/]Controller">
+    <br>
+     <div class="ui header teal segment">
+            <h1 class="ui center aligned header">[a.isSearchController.annotatesJavaAlgoController.parentName.toUpperFirst()/] </h1>
+    </div>
+    <br><br>
+    <div class="ui grid">
+	
+	<div class="four wide column">
+            <div class="ui fluid huge label">
+                <i class="filter icon"></i>
+                <span class="text">Filter</span>
+            </div>
+	[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+	[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+	[for (c : SearchableProperty | aSearchableJavaResourceModel.hasSearchableProperty)]
+	[if (c.isSearchableProperty.annotatesPSMComponentProperty.type='Date')]
+		 	 <div class="ui fluid action input">
+                <input type="datetime-local" ng-model="selectedItem" placeholder="Date" />
+                <button class="ui icon teal button" ng-click="searchBy[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/][c.isSearchableProperty.annotatesPSMComponentProperty.name.toUpperFirst()/](selectedItem)">
+                    <i class="calendar icon"></i>
+                </button>
+            </div>
+	[/if]
+	[if (c.isSearchableProperty.annotatesPSMComponentProperty.type='boolean')]
+			<select class="ui fluid search dropdown" ng-model="selectedItem" ng-change="searchBy[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/][c.isSearchableProperty.annotatesPSMComponentProperty.name.toUpperFirst()/](selectedItem)">
+                <option value="">[c.isSearchableProperty.annotatesPSMComponentProperty.name.toUpperFirst()/]</option>
+                <option value="1" >YES</option>
+                <option value="0">NO</option>
+            </select>
+	[/if]
+	[/for]
+	[/for]
+	[/for]
+	</div>
+
+	<div class="twelve wide column">
+		<div  class="ui positive button" ng-click="checkAll()">Check All</div>
+			<div class="ui negative  button" ng-click="uncheckAll()">Uncheck All</div>
+			<div class="ui left pointing teal basic large label">
+				Select one ore more search properties!!
+			</div>
+			<div class="ui three column center aligned stackable divided grid segment">
+				<div class="column" ng-repeat="checkbox in checkboxes">
+					<div class="ui checkbox">
+						<input type="checkbox" id="$index-cb" name="example" ng-model="checkbox.checked">
+						<label for="$index-cb">{{checkbox.value}}</label>
+					</div>
+				</div>
+			</div>
+			<div class="ui fluid action large input">
+				<input type="text" placeholder="Search Keyword..." ng-model="searchKeyword">
+				<button type="submit" class="ui button" ng-click="search()">Search</button>
+				<button class="ui button" ng-click="searchKeyword=''; clearResult()">Clear</button>
+			</div>
+
+		<!-- Search Results -->
+				[for (jAlgoResourceController : JavaAlgoResourceController | anAnnotationStack.hasCorePSM.hasJavaAlgoController)]
+				[if (jAlgoResourceController.parentName = a.isSearchController.annotatesJavaAlgoController.parentName)]
+				[for (aSearchableJavaResourceModel : SearchableJavaResourceModel | jAlgoResourceController.getSearchableResources(anAnnotationStack))]
+			   <table class="ui compact celled definition table" ng-show="[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]">
+                    <thead>
+                        <tr>
+							[if (anAnnotationStack.relatedResource(aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel)->size()>0)]
+							<th></th>
+							[/if]
+							[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+							[if (p.parentName = aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName)]
+							[for (c : PSMComponentProperty | p.JavaRModelHasProperty)]
+							[if (c.type = 'String') or (c.type = 'float')]
+							<th>[c.name.toUpperFirst()/]</th>
+							[/if]
+							[/for]
+							[/if]
+							[/for]
+                        </tr>
+                    </thead>
+                    <tbody ng-repeat="item  in [aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Results" >
+                        <tr>
+							[if (anAnnotationStack.relatedResource(aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel)->size()>0)]
+							<td>
+								<div class="ui vertical animated positive button" tabindex="0" ng-click="goTo[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName.toUpperFirst()/]Details(item.[aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName/]Id)">
+                                <div class="hidden content">Show More</div>
+                                <div class="visible content">
+                                    <i class="arrow right icon"></i>
+                                </div>
+                        		</div>
+							</td>
+							[/if]
+							[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+							[if (p.parentName = aSearchableJavaResourceModel.isSearchableJavaResourceModel.annotatesJavaResourceModel.parentName)]
+							[for (c : PSMComponentProperty | p.JavaRModelHasProperty)]
+							[if (c.type = 'String') and (c.name = 'image')]
+							<td><img class="ui tiny image" ng-src="{{'data:image/png;base64,'+item.image}}"></td>
+							[elseif ((c.type = 'String') and not(c.name = 'image') or (c.type='int') and not(c.bIsPrimaryIdentifier))]
+							<td>{{item.[c.name/]}}</td>
+							[/if]
+							[/for]
+							[/if]
+							[/for]
+                        </tr>
+                       
+                    </tbody>
+                </table>
+	 			[/for]
+				[/if]
+				[/for]
+		</div>
+	</div>
+</div>
+
+    
+
+[/file]
+[/for]
+[/if]
+[/template]
+
+[query private getSearchControllerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(SearchController) =
+	anAnnotationStack.hasSearchLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(SearchController))->asSequence()
+/]
+
+[query private getSearchableResources(jAlgoRC : JavaAlgoResourceController, anAnnotationStack : AnnotationStack) : Sequence(SearchableJavaResourceModel) =
+   jAlgoRC.getSearchHTTPHandler(anAnnotationStack).searchesJavaResourceModel->asSequence()
+/]
+
+[query private getSearchHTTPHandler(jAlgoRC : JavaAlgoResourceController, anAnnotationStack : AnnotationStack) : SearchHTTPHandler =
+	getSearchHTTPHandlerAnnotations(anAnnotationStack)->select(SearchHTTPHandlerAnnotation | jAlgoRC.JavaAlgoRControllerHasHTTPActivity.hasHTTPActivityHandler->includes(SearchHTTPHandlerAnnotation.isHTTPActivityHandler.annotatesHTTPActivityHandler))->at(1)
+/]
+
+[query private getSearchHTTPHandlerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(SearchHTTPHandler) =
+	anAnnotationStack.hasSearchLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(SearchHTTPHandler))->asSequence()
+/]
+
+[query private hasBothModeAuthentication(anHttpActivity : HTTPActivity, anAnnotationStack : AnnotationStack) : Boolean =
+getAuthenticationLayerBothModeAnnotations(anAnnotationStack)->exists(bothModeAnnotation | bothModeAnnotation.HTTPActivityHasAuthenticationMode->exists(annHTTPActivity | annHTTPActivity.annotatesHTTPActivity.name = anHttpActivity.name))
+/]
+
+[query private getAuthenticationLayerBothModeAnnotations(anAnnotationStack : AnnotationStack) : Sequence(BothMode) =
+	anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(BothMode))->asSequence()
+/]
+
+[query private relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]

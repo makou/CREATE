@@ -1,0 +1,246 @@
+[comment encoding = UTF-8 /]
+[module Index('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/SearchLayerPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/ExternalServiceLayerPSMMetamodel.ecore')]
+
+
+[template public generateIndex(anAnnotationStack : AnnotationStack)]
+
+[file ('/'.concat(anAnnotationStack.hasCorePSM.name.concat('Client/index.html')), false, 'UTF-8')]
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- CSS -->
+
+    <!-- load up bootstrap and add some spacing -->
+    <link rel="stylesheet" href="lib/Semantic-UI/semantic.min.css">
+    <link rel="stylesheet" href="lib/angular-ui-notification/dist/angular-ui-notification.min.css">
+</head>
+
+<body ng-app="[anAnnotationStack.hasCorePSM.name/]App">
+
+    <div ng-include="'./templates/navbar.html'"></div>
+    <div class="container">
+        <div ng-view></div>
+    </div>
+
+
+    <!-- JS -->
+    <!-- load up angular and scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="./lib/angular-1.6.2/angular.min.js"></script>
+    <script src="./lib/angular-1.6.2/angular-resource.min.js"></script>
+    <script src="./lib/angular-1.6.2/angular-route.min.js"></script>
+    <script src="./lib/angular-ui-notification/dist/angular-ui-notification.min.js"></script>
+    <script src="./lib/angular-file-upload-master/dist/angular-file-upload.min.js"></script>
+    <script src="./lib/angular-base64-upload-master/dist/angular-base64-upload.min.js"></script>
+
+	<!-- Semantic UI Library -->
+    <script src="./lib/Semantic-UI/semantic.min.js"></script>
+
+    <script src="./js/app.js"></script>
+	[if (anAnnotationStack.getMainResources()->size()>1)]
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	<script src="./js/controllers/[p.parentName/].controller.js"></script>
+	[/for]
+	[else]
+	<script src="./js/controllers/[anAnnotationStack.getMainResources()->at(1).parentName/].controller.js"></script>
+	[/if]
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	<script src="./js/controllers/[p.parentName/]Detail.controller.js"></script>
+	<script src="./js/controllers/[p.parentName/]View.controller.js"></script>
+	[/for]
+[comment]	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	[for (d : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	<script src="./js/controllers/[d.parentName/]View.controller.js"></script>
+	[/for]
+	[/for][/comment]
+	[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+	<script src="./js/controllers/signin.controller.js"></script>
+	<script src="./js/services/authentication.service.js"></script>
+	[/if]
+	[if (anAnnotationStack.bHasSearchLayer)]
+	[for (a : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+	<script src="./js/controllers/[a.isSearchController.annotatesJavaAlgoController.parentName/].controller.js"></script>
+	[/for]
+	[/if]
+	[if (anAnnotationStack.bHasExternalServiceLayer)]
+	[for (a : JavaRESTClientController | anAnnotationStack.getJavaRESTClientControllerAnnotations())]
+	<script src="./js/controllers/[a.isJavaRESTClientController.annotatesJavaAlgoController.parentName/].controller.js"></script>
+	[/for]	
+	[/if]
+    <script src="./js/services/services.js"></script>
+    
+    
+</body>
+
+</html>
+[/file]
+
+[file ('/'.concat(anAnnotationStack.hasCorePSM.name.concat('Client/templates/navbar.html')), false, 'UTF-8')]
+
+<div [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-controller="SigninController"[/if]>
+    <div class="ui large menu">
+		[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+		[if (anAnnotationStack.getMainResources()->size()=1)]
+		[if (anAnnotationStack.getMainResources()->at(1).parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+		<a class="active item" href="#![anAnnotationStack.getMainResources()->at(1).parentName/]Detail">
+		[/if]
+		[else]
+		<a class="active item" href="#!">
+		[/if]
+		[else]
+		<a class="active item" href="#!">	
+		[/if]
+            <i class="home icon"></i> [anAnnotationStack.hasCorePSM.name/]
+        </a>
+		[if (anAnnotationStack.bHasSearchLayer)]
+		<div class="ui simple dropdown item" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-if="isLogedIn"[/if]><i class="search icon"></i>Search<i class="dropdown icon"></i>
+                <div class="menu">
+					[for (aSearchControler : SearchController | anAnnotationStack.getSearchControllerAnnotations())]
+                    <a class="item" href="#![aSearchControler.isSearchController.annotatesJavaAlgoController.parentName/]">[aSearchControler.isSearchController.annotatesJavaAlgoController.parentName/]</a>
+                    [/for]
+
+                </div>
+         </div>
+		[/if]
+		[if (anAnnotationStack.bHasExternalServiceLayer)]
+		<div class="ui simple dropdown item" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-if="isLogedIn"[/if]><i class="external icon"></i>External Service<i class="dropdown icon"></i>
+                <div class="menu">
+					[for (aRESTClientController : JavaRESTClientController | anAnnotationStack.getJavaRESTClientControllerAnnotations())]
+                    <a class="item" href="#![aRESTClientController.isJavaRESTClientController.annotatesJavaAlgoController.parentName/]">[aRESTClientController.isJavaRESTClientController.annotatesJavaAlgoController.parentName/]</a>
+                    [/for]
+
+                </div>
+         </div>
+		[/if]
+
+		[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+         <div class="ui simple dropdown item" ng-if="isLogedIn" ><i class="plus icon"></i>Create<i class="dropdown icon"></i>
+                <div class="menu">
+					[if (anAnnotationStack.getMainResources()->size()>1)]
+					[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+					[if not(p.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+					<a class="item" href="#!new[p.parentName.toUpperFirst()/]">[p.parentName.toUpperFirst()/]</a>
+					[/if]
+					[/for]
+					[else]
+					
+					[if not(anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName = anAnnotationStack.getMainResources()->at(1).parentName)]
+					<a class="item" href="#!new[anAnnotationStack.getMainResources().parentName.toUpperFirst()/]">[anAnnotationStack.getMainResources().parentName.toUpperFirst()/]</a>
+					[/if]
+					[/if]
+					
+                </div>
+        </div>
+		[else]
+			<div class="ui simple dropdown item" ><i class="plus icon"></i>Create<i class="dropdown icon"></i>
+                <div class="menu">
+					[for (resource : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+						<a class="item" href="#!new[resource.parentName.toUpperFirst()/]">[resource.parentName.toUpperFirst()/]</a>
+					[/for]
+                </div>
+			</div>
+		[/if]
+        [if (anAnnotationStack.bHasAuthenticationAnnotation)]
+        <div class="right menu">
+            <div class="ui simple dropdown item" ng-if="isLogedIn"><i class="user icon"></i>{{globals.currentUser.username}} <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item" href="#![anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]">My Profile</a>
+                   [for (p : JavaResourceModelManager | anAnnotationStack.hasCorePSM.hasJavaRMManager)]
+					[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+					[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel)) ]
+					<a class="item" href="#![c.parentName/]">[c.parentName.toUpperFirst()/]</a>
+					[/for][/if][/for]
+                </div>
+            </div>
+            <div class="item">
+                <div class="ui buttons">
+                    <button class="ui button active" ng-click="signupMode()" ng-if="!isLogedIn">Sign Up</button>
+                    <div class="or" ng-if="!isLogedIn"></div>
+                    <button class="ui teal button" ng-click="loginMode()" ng-if="!isLogedIn">Login</button>
+                </div>
+                <div class="item" ng-click="logout()" ng-if="isLogedIn">
+                    <div class="ui teal button">Logout</div>
+                </div>
+            </div>
+        </div>
+        [/if]
+	</div>
+</div>
+[/file]
+
+[if (anAnnotationStack.getMainResources()->size()>1)]
+[file ('/'+ anAnnotationStack.hasCorePSM.name + 'Client/templates/main.html', false, 'UTF-8')]
+<div>
+    <div class="ui header segment">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">Welcome to [anAnnotationStack.hasCorePSM.name/]</h1>
+        </div>
+    </div>
+</div>
+<br><br>
+<div class="ui big container">
+    <div class="ui three stackable cards">
+	[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+		[if (anAnnotationStack.getMainResources()->size()>1)]
+		[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+		[if not(p.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+		<div class="card">
+            <div class="content">
+                <div class="header">[p.parentName.toUpperFirst()/]</div>
+                <div class="description">
+                    Click the bottom below to see more information about [p.parentName.toUpperFirst()/]
+             	</div>
+         	</div>
+            <a class="item" ng-href="#![p.parentName/]">
+                <div class="ui teal bottom attached button">
+                    <i class="add icon"></i> See more
+                </div>
+            </a>
+		</div>
+		[/if] 
+		[/for]
+		[/if]
+	[else]
+		[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+		<div class="card">
+            <div class="content">
+                <div class="header">[p.parentName.toUpperFirst()/]</div>
+                <div class="description">
+                    Click the bottom below to see more information about [p.parentName.toUpperFirst()/]
+             	</div>
+         	</div>
+            <a class="item" ng-href="#![p.parentName/]">
+                <div class="ui teal bottom attached button">
+                    <i class="add icon"></i> See more
+                </div>
+            </a>
+		</div>
+		[/for]
+	[/if]	
+	</div>
+</div>     
+[/file]
+[/if]
+[/template]
+[query private getSearchControllerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(SearchController) =
+	anAnnotationStack.hasSearchLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(SearchController))->asSequence()
+/]
+
+[query public getMainResources(anAnnotationStack: AnnotationStack): OrderedSet(JavaResourceModelManager) = 
+(anAnnotationStack.hasCorePSM.hasJavaRMManager-anAnnotationStack.hasCorePSM.hasJavaRMManager->intersection(anAnnotationStack.hasCorePSM.hasJavaRModel.hasRelatedJavaRMManager->asOrderedSet()))->asOrderedSet()
+/]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query public relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]
+
+[query private getJavaRESTClientControllerAnnotations(anAnnotationStack : AnnotationStack) : Sequence(JavaRESTClientController) =
+	anAnnotationStack.hasExternalServiceLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(JavaRESTClientController))->asSequence()
+/]

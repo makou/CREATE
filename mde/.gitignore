@@ -1,0 +1,34 @@
+/bin/
+/target/
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+.pmd
+
+
+eu.scasefp7.eclipse.mde.m2t/LayeredPSMToText
+
+eu.scasefp7.eclipse.mde.cimgen/reports/pmd-report.txt
+
+eu.scasefp7.eclipse.mde.cimgen/reports/pmd-report.xml
+
+eu.scasefp7.eclipse.mde.m2m/Metamodels/.DS_Store
+
+eu.scasefp7.eclipse.mde.m2m/.DS_Store
+
+.DS_Store

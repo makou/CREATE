@@ -1,0 +1,679 @@
+[comment encoding = UTF-8 /]
+[module Views('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore')]
+
+
+[template public generateViews(anAnnotationStack : AnnotationStack)]
+[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/'.concat('') + p.parentName + '.html', false, 'UTF-8')]
+<div ng-controller="[p.parentName.toUpperFirst()/]Controller">
+    <div class="ui header segment">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">Welcome to [anAnnotationStack.hasCorePSM.name/]</h1>
+        </div>
+    </div>
+    <br><br>
+    <div class="ui container">
+        <div class="ui three column grid" ng-init="getAll[p.parentName.toUpperFirst()/]s()">
+            <div class="column" ng-repeat="[p.parentName/] in [p.parentName.toUpperFirst()/]s.linklist" ng-if="[p.parentName/].linkType=='Child'">
+                <div class="ui segment" ng-controller="[p.parentName/]DetailController" ng-init="get[p.parentName.toUpperFirst()/]Details([p.parentName/].linkURI)">
+                    <p>
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.type='String')]
+                       [if (c.name='image')]
+                        <img class="ui fluid image " ng-src="{{image}}" style="" />
+                       [/if]
+					[/if]
+					[/for]
+					<div ng-hide="editBoolean">
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.type='String')]
+						[if not(c.name='image')]
+							[if (c.bIsNamingProperty)]
+							<h3>{{model.[p.parentName/].[c.name/]}}</h3>
+							[else]
+							<p><b>[c.name.toUpperFirst()/]: </b>{{model.[p.parentName/].[c.name/]}}</p>
+							[/if]
+						[/if]
+					[elseif (c.type='Date')]
+						<p><b>[c.name.toUpperFirst()/]: </b>{{model.[p.parentName/].[c.name/] | date:'fullDate'}} @ {{model.[p.parentName/].[c.name/] | date:'shortTime'}}</p>
+					[elseif (c.type='int' or c.type = 'float')]
+					[if not(c.bIsPrimaryIdentifier)]
+						<p><b>[c.name.toUpperFirst()/]: </b>{{model.[p.parentName/].[c.name/]}}<p>
+					[/if]
+					[/if]
+					[/for]
+					</div>
+					<div ng-show="editBoolean">
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.type='String')]
+						[if not(c.name='image')]
+							<div class="field">
+                                <div class="ui large left icon input">
+                                    <input type="text" name="[c.name.toUpperFirst()/]" ng-model="model.[p.parentName/].[c.name/]">
+                                </div>
+                            </div>
+						[/if]
+					[elseif (c.type='int' or c.type = 'float')]
+					[if not(c.bIsPrimaryIdentifier)]
+						<div class="field">
+                                <div class="ui large left icon input">
+                                    <input type="number" name="[c.name.toUpperFirst()/]" ng-model="model.[p.parentName/].[c.name/]">
+                                </div>
+                        </div>
+					[/if]
+					[/if]
+					[/for]
+					</div>
+					<br>
+					<div class="ui buttons">
+					<div [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-if="isLogedIn"[/if]>
+					[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+					[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+					[if (httpActivity.ActivityHTTPVerb.toString() = 'DELETE' and aJavaResourceController.parentName = p.parentName)]
+                            <div class="ui vertical animated negative button" tabindex="0" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-if="isLogedIn"[/if] ng-controller="[p.parentName.toUpperFirst()/]Controller" ng-click="delete[p.parentName.toUpperFirst()/]([p.parentName/].linkURI)">
+                                <div class="hidden content">Delete</div>
+                                <div class="visible content">
+                                    <i class="trash icon"></i>
+                                </div>
+                            </div>
+					[elseif (httpActivity.ActivityHTTPVerb.toString() = 'PUT' and aJavaResourceController.parentName = p.parentName)]
+						      <div class="ui vertical animated orange button" ng-hide="editBoolean" tabindex="0" ng-click="edit(true)">
+                                    <div class="hidden content">Edit</div>
+                                    <div class="visible content">
+                                        <i class="edit icon"></i>
+                                    </div>
+                                </div>
+                                <div class="ui vertical animated positive button" ng-show="editBoolean" tabindex="0" ng-click="edit(false) ; update[p.parentName.toUpperFirst()/](model.[p.parentName/], [p.parentName/].linkURI)">
+                                    <div class="hidden content">Save</div>
+                                    <div class="visible content">
+                                        <i class="edit icon"></i>
+                                    </div>
+                                </div>
+					[/if][/for][/for]
+					</div>
+					[if (anAnnotationStack.relatedResource(p.hasRelatedJavaRModel)->size()>0)]
+	 						<div class="ui animated button" tabindex="0" ng-controller="[p.parentName/]DetailController" ng-click="[p.parentName/]Detail([p.parentName/])">
+                                <div class="visible content">Show More</div>
+                                <div class="hidden content">
+                                    <i class="right arrow icon"></i>
+                                </div>
+                            </div>
+					[/if]
+                        </div>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+[/file]
+[comment Take the main resources and show the subresources and their properties /]
+
+[if (anAnnotationStack.relatedResource(p.hasRelatedJavaRModel)->size()>0)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/'.concat('') + p.parentName + 'Detail.html', false, 'UTF-8')]
+	<div class="ui container" ng-controller="[p.parentName/]ViewController">
+    <div class="ui header">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">[p.parentName.toUpperFirst()/] Details</h1>
+        </div>
+    </div>
+    <br><br>
+    <div class="ui big container">
+    	<div class="ui three stackable cards">
+		[for (aRelatedJRModel : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+			<div class="card">
+            	<div class="content">
+					[if (anAnnotationStack.relatedResource(aRelatedJRModel.hasRelatedJavaRModel)->size()>0)]
+					<a class="header" ng-href="#![aRelatedJRModel.parentName/]Detail">[aRelatedJRModel.parentName.toUpperFirst()/]</a>
+					[else]
+					<div class="header">[aRelatedJRModel.parentName.toUpperFirst()/]</div>
+					[/if]
+                	<div class="description">
+                    Click the bottom below to see more information about [aRelatedJRModel.parentName/]s
+                	</div>
+            	</div>
+            	<div class="ui teal icon button" ng-click="[aRelatedJRModel.parentName/] =  true">
+             		<i class="add icon"></i> See more
+            	</div>
+			</div>
+		[/for]
+    	</div>
+	</div>
+	<br><br>
+  	<div class="ui container" ng-init="details()">
+		[for (aRelatedJRModel : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+			<table class="ui compact celled definition table" ng-show="[aRelatedJRModel.parentName/]" >
+				<thead class="full-width">
+				<tr>
+                    <th>
+                        <div class="ui button" ng-click="[aRelatedJRModel.parentName/]=false">Close
+                        </div>
+                    </th>
+					[if (anAnnotationStack.bHasAuthenticationAnnotation)]<th ng-show="isLogedIn"></th>[/if]
+					[for (c : PSMComponentProperty | aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.type = 'String') and not(c.name = 'image')]
+					<th>[c.name.toUpperFirst()/]</th>
+					[elseif (c.type = 'boolean')]
+					<th>[c.name.toUpperFirst()/]</th>
+					[elseif (c.type = 'int' or c.type = 'float')]
+						[if not(c.bIsPrimaryIdentifier)]
+					<th>[c.name.toUpperFirst()/]</th>[/if]
+					[/if]
+					[/for]
+				 </tr>
+			 </thead>
+			 <tbody ng-repeat="[aRelatedJRModel.parentName/]Item  in [aRelatedJRModel.parentName/]s">
+				<tr>
+					<td class="collapsing" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+                        [for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+						[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+						[if (httpActivity.ActivityHTTPVerb.toString() = 'PUT' and aJavaResourceController.parentName = p.parentName)]
+						<div class="ui vertical animated positive button" ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]" tabindex="0" ng-click="edit[aRelatedJRModel.parentName.toUpperFirst()/] = true">
+                                <div class="hidden content">Edit</div>
+                                <div class="visible content">
+                                    <i class="edit icon"></i>
+                                </div>
+                        </div>
+                        <div class="ui vertical animated positive button" ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]" tabindex="0"  ng-click="update[aRelatedJRModel.parentName.toUpperFirst()/](model, [aRelatedJRModel.parentName/]Item.[aRelatedJRModel.parentName/]Id) ;edit[aRelatedJRModel.parentName.toUpperFirst()/]= false">
+                                <div class="hidden content">Save</div>
+                                <div class="visible content">
+                                    <i class="edit icon"></i>
+                                </div>
+                        </div>
+						[/if][/for][/for]
+                    </td>
+				[if (anAnnotationStack.bHasAuthenticationAnnotation)]<td ng-show="!isLogedIn"></td>[/if]
+				<td class="collapsing" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+                        [for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+						[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+						[if (httpActivity.ActivityHTTPVerb.toString() = 'DELETE' and aJavaResourceController.parentName = aRelatedJRModel.parentName)]
+						<div class="ui vertical animated negative button" tabindex="0" ng-click="delete[aRelatedJRModel.parentName.toUpperFirst()/]([aRelatedJRModel.parentName/]Item.[aRelatedJRModel.parentName/]Id)">
+                            <div class="hidden content">Delete</div>
+                            <div class="visible content">
+                              	<i class="delete icon"></i>
+                            </div>
+                        </div>
+						[/if][/for][/for]
+                </td>
+				[for (c : PSMComponentProperty | aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty)]
+				[if (c.type = 'String') and not(c.type = 'image')]
+					<td ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]">{{[aRelatedJRModel.parentName/]Item.[c.name/]}}</td>
+					<td ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]">
+						 <div class="field">
+                            <div class="ui large left icon input">
+                                <input type="text" name="[c.name.toUpperFirst()/]" ng-model="[aRelatedJRModel.parentName/]Item.[c.name/]">
+							</div>
+                        </div>
+					</td>
+					[if (c.type = 'String') and (c.name = 'image')]
+					<td><img class="ui tiny image" ng-src="{{'data:image/png;base64,'+[aRelatedJRModel.parentName/]Item.image}}"></td>
+					[/if]
+				[elseif (c.type = 'boolean')]
+					
+				[elseif (c.type = 'int' or c.type = 'float')]
+				[if not(c.bIsPrimaryIdentifier)]
+					<td ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]">{{[aRelatedJRModel.parentName/]Item.[c.name/]}}</td>
+					<td ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]"><input type="number" name="[c.name.toUpperFirst()/]" placeholder="[c.name.toUpperFirst()/]" ng-model="[aRelatedJRModel.parentName/]Item.[c.name/]"></td>
+				[/if]
+				[/if]
+				[/for]
+				</tr>
+			</tbody>
+			<tfoot class="full-width" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+				<tr>
+                    <th></th>
+                    <th colspan="[aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty->size()/]">
+                        <div class="ui right floated small positive labeled icon button" ng-click="create[aRelatedJRModel.parentName.toUpperFirst()/]()">
+                            <i class="plus icon"></i> Add [aRelatedJRModel.parentName.toUpperFirst()/]
+                        </div>
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+	[/for]
+ </div> 
+[/file]
+[/if]
+
+[comment if the sub resources have also sub resources create the view for them also /]
+
+[for (aRJResource : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+[if (anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel)->size()>0)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/'.concat('') + aRJResource.parentName + 'Detail.html', false, 'UTF-8')]
+	<div class="ui container" ng-controller="[aRJResource.parentName/]ViewController">
+    <div class="ui header">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">[aRJResource.parentName.toUpperFirst()/] Details</h1>
+        </div>
+    </div>
+    <br><br>
+    <div class="ui big container">
+    	<div class="ui three stackable cards">
+		[for (aRelatedJRModel : JavaResourceModelManager | anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel))]
+			<div class="card">
+            	<div class="content">
+                	<div class="header">[aRelatedJRModel.parentName.toUpperFirst()/]</div>
+                	<div class="description">
+                    Click the bottom below to see more information about [aRelatedJRModel.parentName/]s
+                	</div>
+            	</div>
+				<div class="extra content">
+              		<div class="ui two buttons">
+            		<div class="ui teal icon button" ng-click="[aRelatedJRModel.parentName/] =  true">
+             			<i class="add icon"></i> See more
+            		</div>
+        			</div>
+				</div>
+		[/for]
+    	</div>
+	</div>
+	<br><br>
+  	<div class="ui container" ng-init="details()">
+		[for (aRelatedJRModel : JavaResourceModelManager | anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel))]
+			<table class="ui compact celled definition table" ng-show="[aRelatedJRModel.parentName/]" >
+				<thead class="full-width">
+				<tr>
+                    <th>
+                        <div class="ui button" ng-click="[aRelatedJRModel.parentName/]=false">Close
+                        </div>
+                    </th>
+					[if (anAnnotationStack.bHasAuthenticationAnnotation)]<th ng-show="isLogedIn"></th>[/if]
+					[for (c : PSMComponentProperty | aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.type = 'String')]
+					<th>[c.name.toUpperFirst()/]</th>
+					[elseif (c.type = 'boolean')]
+					<th>[c.name.toUpperFirst()/]</th>
+					[elseif (c.type = 'int' or c.type = 'float')]
+					[if not(c.bIsPrimaryIdentifier)]
+					<th>[c.name.toUpperFirst()/]</th>
+					[/if]
+					[/if]
+					[/for]
+				 </tr>
+			 </thead>
+			 <tbody ng-repeat="[aRelatedJRModel.parentName/]Item  in [aRelatedJRModel.parentName/]s">
+				<tr>
+					<td class="collapsing" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+                        <div class="ui vertical animated positive button" ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]" tabindex="0" ng-click="edit[aRelatedJRModel.parentName.toUpperFirst()/] = true">
+                                <div class="hidden content">Edit</div>
+                                <div class="visible content">
+                                    <i class="edit icon"></i>
+                                </div>
+                        </div>
+                        <div class="ui vertical animated positive button" ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]" tabindex="0"  ng-click="update[aRelatedJRModel.parentName.toUpperFirst()/](model, [aRelatedJRModel.parentName/]Item.[aRelatedJRModel.parentName/]Id) ;edit[aRelatedJRModel.parentName.toUpperFirst()/]= false">
+                                <div class="hidden content">Save</div>
+                                <div class="visible content">
+                                    <i class="edit icon"></i>
+                                </div>
+                        </div>
+                    </td>
+				[if (anAnnotationStack.bHasAuthenticationAnnotation)]<td ng-show="!isLogedIn"></td>[/if]
+				<td class="collapsing" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+                        <div class="ui vertical animated negative button" tabindex="0" ng-click="delete[aRelatedJRModel.parentName.toUpperFirst()/]([aRelatedJRModel.parentName/]Item.[aRelatedJRModel.parentName/]Id)">
+                            <div class="hidden content">Delete</div>
+                            <div class="visible content">
+                              	<i class="delete icon"></i>
+                            </div>
+                        </div>
+                </td>
+				[for (c : PSMComponentProperty | aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty)]
+				[if (c.type = 'String')]
+					<td ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]">{{[aRelatedJRModel.parentName/]Item.[c.name/]}}</td>
+					<td ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]"><input type="text" name="[c.name.toUpperFirst()/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]"></td>
+				[elseif (c.type = 'boolean')]
+					
+				[elseif (c.type = 'int' or c.type = 'float')]
+				[if not(c.bIsPrimaryIdentifier)]
+					<td ng-hide="edit[aRelatedJRModel.parentName.toUpperFirst()/]">{{[aRelatedJRModel.parentName/]Item.[c.name/]}}</td>
+					<td ng-show="edit[aRelatedJRModel.parentName.toUpperFirst()/]"><input type="number" name="[c.name.toUpperFirst()/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]"></td>
+				[/if]
+				[/if]
+				[/for]
+				</tr>
+			</tbody>
+			<tfoot class="full-width" [if (anAnnotationStack.bHasAuthenticationAnnotation)]ng-show="isLogedIn"[/if]>
+				<tr>
+                    <th></th>
+                    <th colspan="[aRelatedJRModel.hasRelatedJavaRModel.JavaRModelHasProperty->size()/]">
+                        <div class="ui right floated small positive labeled icon button" ng-click="create[aRelatedJRModel.parentName.toUpperFirst()/]()">
+                            <i class="plus icon"></i> Add [aRelatedJRModel.parentName.toUpperFirst()/]
+                        </div>
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+	[/for]
+ </div>	
+[/file]
+[/if]
+[/for]
+[/for]
+
+[comment This is the view for the authenication resource /]
+
+[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/'.concat('') + anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName + '.html', false, 'UTF-8')]
+	<div ng-controller="[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller">
+    <br><br>
+    <div class="ui two column doubling stackable grid container" ng-init="get[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]()">
+        <div class="five wide column">
+            <div class="ui card">
+                
+				[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+				[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+				[for (c : PSMComponentProperty | p.JavaRModelHasProperty)]
+				[if (c.type='String')]
+				[if (c.bIsNamingProperty)]
+                <div class="content">
+                    <a class="header">{{model.[p.parentName/].[c.name/]}}</a>
+                </div>[/if][/if][/for][/if][/for]
+	
+            </div>
+        </div>
+        <div class="ten wide column">
+            <div class="ui raised secondary segment fields">
+                <h2 class="ui olive ribbon label">[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/] Information</h2>
+                <div class="ui form">
+                    <br>
+				[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+				[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+                [for (c : PSMComponentProperty | p.JavaRModelHasProperty)]
+				<label>[c.name.toUpperFirst()/]</label>
+                        <div class="field">
+                            <div class="ui large left icon input">
+				[if (c.type='String')]
+						[if not(c.name='image')]
+                                <input type="text" name="[c.name/]" ng-model="model.[p.parentName/].[c.name/]">
+						[/if]                            
+				[elseif (c.type='int' or c.type = 'float')]
+						[if not(c.bIsPrimaryIdentifier)]
+								<input type="number" name="[c.name/]" ng-model="model.[p.parentName/].[c.name/]">	
+						[/if]
+				[elseif (c.type='Date')]									
+								<input type="date" name="[c.name/]" ng-model="model.[p.parentName/].[c.name/]">
+				[/if]
+							  </div>
+                         </div>
+				[/for] 
+				[/if]      
+				[/for]	
+	
+					[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+					[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+					[if (httpActivity.ActivityHTTPVerb.toString() = 'PUT' and aJavaResourceController.parentName = anAnnotationStack.getAuthenticationPerformer(anAnnotationStack).authenticationModelParentName)]
+					<button class="circular ui positive icon button" ng-click="update[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/](model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/])">
+                        <i class="save icon"></i> Save
+                    </button>
+					[/if][/for][/for]
+				</div>
+                <br>
+				[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+				[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+				[if (httpActivity.ActivityHTTPVerb.toString() = 'DELETE' and aJavaResourceController.parentName = anAnnotationStack.getAuthenticationPerformer(anAnnotationStack).authenticationModelParentName)]
+                <div class="ui message center aligned segment">
+                    Do you want to delete [anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]?
+                    <button class="circular ui negative icon button" ng-click="delete[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/](model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/])">
+                    	<i class="remove user icon"></i> Delete
+                	</button>
+                </div>
+				[/if][/for][/for]
+            </div>
+        </div>
+    </div>
+</div>
+    
+[/file]
+[/if]
+
+[comment the view responsible for the creation of a new record  /]
+
+[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/new'.concat('') + p.parentName.toUpperFirst() + '.html', false, 'UTF-8')]
+<div class="ui container" ng-controller="[p.parentName.toUpperFirst()/]Controller">
+    <div class="ui header">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">Create [p.parentName.toUpperFirst()/]
+            </h1>
+        </div>
+    </div>
+	<br><br>
+     <form class="ui form" name="[p.parentName/]Form">
+            <div class="ui container">
+                <div class="ui relaxed divided padded full grid">
+                    <div class="row">
+                        <div class="eleven wide column">
+						[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+						[if (c.type='String')]
+							[if not(c.name='image')]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="text"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='int' or c.type = 'float')]
+							[if not(c.bIsPrimaryIdentifier)]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="number"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='Date')]
+							<div class="field">
+								<label>Date & Time</label>
+								<input type="datetime-local" name="[c.name/]" ng-model="model.[c.name/]">
+							</div>
+						[/if]
+						[/for]
+                        <button  type="submit" class="ui left labeled icon button" >
+                         Cancel
+                        </button>
+                        <button  type="submit" class="ui right labeled icon button" ng-click="submit[p.parentName.toUpperFirst()/](model)">
+                                <i class="right arrow icon"></i>Save
+                         </button>
+                    </div>
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.name='image')]
+                    <div class="five wide column">
+                            <h5 class="ui dividing header">Upload Photo</h5>
+                            <div class="field">
+                                <div>
+                                    <label ng-hide="file" for="file" class="ui massive icon button">
+                                <i class="upload icon"></i>Open File</label>
+                                    <input id="file" style="display:none" type="file" ng-model="file" name="file" base-sixty-four-input required onload="onLoad"
+                                        maxsize="500" accept="image/*" />
+                                </div>
+                                <div ng-show="file">
+                                    <img src="" id="image" class="ui medium rounded image" height="250px" width="300px" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+					[/if]
+					[/for]
+                </div>
+            </div>
+        </form>
+</div>
+
+[/file]
+[/for]
+
+
+[for (layer : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+[for (p : JavaResourceModelManager | anAnnotationStack.relatedResource(layer.hasRelatedJavaRModel))]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/new'.concat('') + p.parentName.toUpperFirst() + '.html', false, 'UTF-8')]
+<div class="ui container" ng-controller="[layer.parentName.toUpperFirst()/]Controller">
+    <div class="ui header">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">Create [p.parentName.toUpperFirst()/]
+            </h1>
+        </div>
+    </div>
+	<br><br>
+     <form class="ui form" name="[p.parentName/]Form">
+            <div class="ui container">
+                <div class="ui relaxed divided padded full grid">
+                    <div class="row">
+                        <div class="eleven wide column">
+						[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+						[if (c.type='String')]
+							[if not(c.name='image')]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="text"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='int' or c.type = 'float')]
+							[if not(c.bIsPrimaryIdentifier)]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="number"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='Date')]
+							<div class="field">
+								 <label>Date & Time</label>
+								<input type="datetime-local" name="[c.name/]" ng-model="model.[c.name/]">
+							</div>
+						[/if]
+						[/for]
+                        <button  type="submit" class="ui left labeled icon button" >
+                         Cancel
+                        </button>
+                        <button  type="submit" class="ui right labeled icon button" ng-click="submit[p.parentName.toUpperFirst()/](model)">
+                                <i class="right arrow icon"></i>Save
+                         </button>
+                    </div>
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.name='image')]
+                    <div class="five wide column">
+                            <h5 class="ui dividing header">Upload Photo</h5>
+                            <div class="field">
+                                <div>
+                                    <label ng-hide="file" for="file" class="ui massive icon button">
+                                <i class="upload icon"></i>Open File</label>
+                                    <input id="file" style="display:none" type="file" ng-model="file" name="file" base-sixty-four-input required onload="onLoad"
+                                        maxsize="500" accept="image/*" />
+                                </div>
+                                <div ng-show="file">
+                                    <img src="" id="image" class="ui medium rounded image" height="250px" width="300px" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+					[/if]
+					[/for]
+                </div>
+            </div>
+        </form>
+</div>
+[/file]
+[/for]	
+[/for]
+
+[for (layer : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+[for (p : JavaResourceModelManager | anAnnotationStack.relatedResource(layer.hasRelatedJavaRModel))]
+[for (d : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/templates/new'.concat('') + d.parentName.toUpperFirst() + '.html', false, 'UTF-8')]
+<div class="ui container" ng-controller="[p.parentName.toUpperFirst()/]Controller">
+    <div class="ui header">
+        <div class="ui container">
+            <br>
+            <h1 class="ui center aligned header">Create [d.parentName.toUpperFirst()/]
+            </h1>
+        </div>
+    </div>
+	<br><br>
+     <form class="ui form" name="[d.parentName/]Form">
+            <div class="ui container">
+                <div class="ui relaxed divided padded full grid">
+                    <div class="row">
+                        <div class="eleven wide column">
+						[for (c : PSMComponentProperty | d.hasRelatedJavaRModel.JavaRModelHasProperty)]
+						[if (c.type='String')]
+							[if not(c.name='image')]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="text"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='int' or c.type = 'float')]
+							[if not(c.bIsPrimaryIdentifier)]
+							<div class="field">
+                                <label>[c.name.toUpperFirst()/]</label>
+                                <div class="ui left labeled input">
+                                    <input type="number"  name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                                </div>
+                            </div>
+							[/if]
+						[elseif (c.type='Date')]
+							<div class="field">
+								 <label>Date & Time</label>
+								<input type="datetime-local" name="[c.name/]" ng-model="model.[c.name/]">
+							</div>
+						[/if]
+						[/for]
+                        <button  type="submit" class="ui left labeled icon button" >
+                         Cancel
+                        </button>
+                        <button  type="submit" class="ui right labeled icon button" ng-click="submit[d.parentName.toUpperFirst()/](model)">
+                                <i class="right arrow icon"></i>Save
+                         </button>
+                    </div>
+					[for (c : PSMComponentProperty | p.hasRelatedJavaRModel.JavaRModelHasProperty)]
+					[if (c.name='image')]
+                    <div class="five wide column">
+                            <h5 class="ui dividing header">Upload Photo</h5>
+                            <div class="field">
+                                <div>
+                                    <label ng-hide="file" for="file" class="ui massive icon button">
+                                <i class="upload icon"></i>Open File</label>
+                                    <input id="file" style="display:none" type="file" ng-model="file" name="file" base-sixty-four-input required onload="onLoad"
+                                        maxsize="500" accept="image/*" />
+                                </div>
+                                <div ng-show="file">
+                                    <img src="" id="image" class="ui medium rounded image" height="250px" width="300px" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+					[/if]
+					[/for]
+                </div>
+            </div>
+        </form>
+</div>
+[/file]
+[/for]
+[/for]	
+[/for]
+
+[/template]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query private relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]
+
+[query private getMainResources(anAnnotationStack: AnnotationStack): OrderedSet(JavaResourceModelManager) = 
+(anAnnotationStack.hasCorePSM.hasJavaRMManager-anAnnotationStack.hasCorePSM.hasJavaRMManager->intersection(anAnnotationStack.hasCorePSM.hasJavaRModel.hasRelatedJavaRMManager->asOrderedSet()))->asOrderedSet()
+/]

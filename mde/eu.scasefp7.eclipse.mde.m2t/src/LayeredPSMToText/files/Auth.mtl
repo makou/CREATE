@@ -1,0 +1,305 @@
+[comment encoding = UTF-8 /]
+[module Auth('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore')]
+
+
+[template public generateAuth(anAnnotationStack : AnnotationStack)]
+[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+
+[file ('/'+ anAnnotationStack.hasCorePSM.name + 'Client/templates/signin.html', false, 'UTF-8')]
+
+<div ng-controller="SigninController">
+    <br><br><br>
+
+	<!--Sign Up Form-->
+    <div class="ui container">
+      <form class="ui form" name="signUpForm" ng-show="signup">
+		<!--The information for the authentication-->
+           <div class="ui raised secondary segment field">
+                <h3 class="ui teal ribbon large label">Authentication Information</h3>
+                <br><br>
+                <div class="fields">
+					[for (p: String | anAnnotationStack.getAuthenticationPerformer().hasAuthenticationToken.name)]
+                    <div class="required inline eight wide field">
+						<label>[p.toUpperFirst()/]</label>
+						<div class="ui left labeled icon input">
+							[if (p='password')]
+							<i class="lock icon"></i>
+							<input type="password" name="password" placeholder="[p.toUpperFirst()/]" ng-model="model.[p/]" required>
+							[else]
+							<i class="user icon"></i>
+							<input type="text" name="username" placeholder="[p.toUpperFirst()/]" ng-model="model.[p/]" required>
+							[/if]
+						</div>
+                    	<div class="ui pointing red basic label" ng-show="(signUpForm.[p/].$touched || signUpForm.$submitted) && signUpForm.[p/].$error.required">
+                            [p.toUpperFirst()/] is required
+                    	</div>
+                  	</div>
+					[/for]
+                </div>
+          </div>
+
+		[for (p: JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+		[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+		<div class="ui raised secondary segment field">
+            <h3 class="ui teal ribbon large label">[p.parentName.toUpperFirst()/] Information</h3>
+             <br>    
+            <div class="ui two column doubling stackable grid container">
+			[for (c : PSMComponentProperty | p.JavaRModelHasProperty)]
+			[if (c.type='String')]
+			[if not(c.type='HypermediaLink')]
+			[if (not(c.type='Java'.concat('').concat(p.parentName.concat('Model'))))]
+			[if (not(c.bIsPrimaryIdentifier))]
+				 <div class="column">
+                        <div class="field">
+                            <label>[c.name.toUpperFirst()/]</label>
+							[if (c.type='Date')]
+								 <div class="ui calendar">
+                            		<div class="ui input left icon">
+                                		<i class="calendar icon"></i>
+                                		<input type="date" ng-model="model.[c.name/]" placeholder="[c.name.toUpperFirst()/]" />
+                           			 </div>
+                        		</div>
+							[/if]
+                            <input type="text" name="[c.name/]" placeholder="[c.name.toUpperFirst()/]" ng-model="model.[c.name/]">
+                        </div>
+                  </div>
+			[/if][/if][/if][/if]
+			[/for]
+			[/if][/for]
+			</div>
+		</div>
+        <br><br>
+        <div class="ui buttons center aligned page grid">
+             <button class="ui button active">Cancel</button>
+              <div class="or"></div>
+              <button class="ui positive button" ng-click="submit([for (p: String | anAnnotationStack.getAuthenticationPerformer().hasAuthenticationToken.name)] model.[p/], [/for] model)" ng-disabled="signUpForm.$invalid">Save</button>
+         </div>
+         <br><br>
+       </form>
+    </div>
+
+    <!--LOGIN-->
+
+    <div class="ui middle aligned center aligned grid" ng-hide="signup">
+        <div class="column" style="max-width: 700px;">
+            <div class="ui hidden divider"></div>
+            <h2 class="ui image header">
+                <div class="content">
+                    Log-in to your account
+                </div>
+            </h2>
+            <form method="get" class="ui large form">
+                <div class="ui stacked secondary  segment">
+					[for (p: String | anAnnotationStack.getAuthenticationPerformer().hasAuthenticationToken.name)]
+                    <div class="field">
+                        <div class="ui left icon input">
+							[if (p='password')]
+                            <i class="lock icon"></i>
+                            <input type="password" name="[p/]" placeholder="[p.toUpperFirst()/]" ng-model="[p/]">
+                        	[else]
+							<i class="user icon"></i>
+                            <input type="text" name="[p/]" placeholder="[p.toUpperFirst()/]" ng-model="[p/]">
+							[/if]
+						</div>
+                    </div>
+					[/for]
+                    <div class="ui fluid large teal submit button" ng-click="login(username, password)" ng-disabled="editForm.$invalid">Login</div>
+                </div>
+                <div class="ui error message"></div>
+            </form>
+            <div class="ui message">
+                Don't have an account?
+                <button class="circular ui icon button" ng-click="signupMode()">
+                    <i class="add user icon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+[/file]
+
+
+
+[file ('/'+ anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/signin.controller.js', false, 'UTF-8')]
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:SigninController
+* @description:
+*
+* This is the controller responsible for the authentication of the service 
+*
+**/
+
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('SigninController', Signin);
+
+function Signin($scope, dataService, authenticationService, Notification, $location, $window, $rootScope, $route, config) {
+    $scope.model = {};
+    $scope.login = login;
+    $scope.getProfile = getProfile;
+    $scope.signupMode = signupMode;
+    $scope.loginMode = loginMode;
+
+	/**
+	* @ngdoc method
+	* @name login
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:SigninController
+	* @description
+	*
+	* This method is called when the user tries to authenticate. It sends an HTTP GET request 
+	* with the user's credentials to the server.Then it shows a "welcome" message to the user, 
+	* marks the isLogedIn variable of the rootScope as true and redirects to the main page. 
+	* If the response has an error, it informs the user that he entered wrong credentials and log the error.
+	**/  
+    function login(username, password) {
+        authenticationService.setCredentials(username, password)
+        authenticationService.login().query(function (callbackdata) {
+            angular.forEach(callbackdata.linklist, function (link) {
+                if (link.linkRel == username && link.linkVerb == 'GET') {
+                    $rootScope.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]Url = link.linkURI;
+                    getProfile(link.linkURI)
+                }
+            })
+        }).$promise.then(
+            //on success
+            function () {
+                $rootScope.isLogedIn = true;
+                Notification.success("You have been successfully logged in! Welcome " + username );
+    		
+				[if (anAnnotationStack.getMainResources()->size()=1)]
+				[if (anAnnotationStack.getMainResources()->at(1).parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+				$window.location.href = '#![anAnnotationStack.getMainResources()->at(1).parentName/]Detail';	
+				[/if]
+				[else]
+				$window.location.href = '#!';
+				[/if]	
+            },
+            //error
+            function () { Notification.error("Wrong credentials "); }
+            )
+    };
+
+    function getProfile(link) {
+		 	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+			[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+			[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+			[if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]
+			$scope.model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/] = dataService.data(link).getall(function (data) {
+			[else]
+			$scope.model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/] = dataService.dataAuth(link).getall(function (data) {		
+			[/if][/if][/for][/for]
+        })
+    };
+
+	[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+	[if (p.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	/**
+	* @ngdoc method
+	* @name submit
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:SigninController
+	* @description
+	*
+	* This method is called when the user fills the form to create a new user resource and presses the 
+	* submit button. To create a new user it sends an HTTP POST request to the server with the data 
+	* filled in the form as a form object. Then redirect the user to the form responsible for the login
+	**/
+	$scope.submit = function (username, password, model) {
+        dataService.data(config.signInUrl).save(model, function (data) {
+            authenticationService.setCredentials(username, password)
+            Notification.success("Successful registration! Please Log in!")
+            $route.reload();
+            $rootScope.signup = false;
+            $location.path("/login");
+        })
+    };
+	[else]
+	[for (aRelatedResource : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	[if (aRelatedResource.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	$scope.firstSubmit = function(model){
+        dataService.data(config.[p.parentName/]Url).save(model, function(data){
+            $scope.next = true;
+            angular.forEach(data.linklist,function(link){
+                if (link.linkType == 'Child') {
+                    $rootScope.[p.parentName/] = link.linkURI;
+                }
+            })
+        })
+    };
+
+	$scope.submit = function (username, password, model) {
+        console.log("submit: " + $rootScope.[p.parentName/])
+        dataService.data($rootScope.[p.parentName/]).getall(function(linklist){
+            angular.forEach(linklist.linklist, function(link){
+                if (link.linkType == 'Child' && link.linkVerb == 'POST') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[aRelatedResource.parentName/]') {
+                        dataService.data(link.linkURI).save(model, function (data) {
+                        authenticationService.setCredentials(username, password)
+                        Notification.success("Successful registration! Please Log in!")
+                        $route.reload();
+                        $rootScope.signup = false;
+                        $location.path("/login");
+                        })
+                    }
+                }
+            })
+        })
+    };
+	[/if]
+	[/for]
+	[/if]
+	[/for]
+
+	/**
+	* @ngdoc method
+	* @name logout
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:SigninController
+	* @description
+	*
+	* This method is called when the user clicks the "Logout" button. It clears the curent credentials 
+    * and redirects to the main page.
+	**/
+    $scope.logout = function () {
+        authenticationService.clearCredentials();
+        $rootScope.isLogedIn = false;
+        $location.path("/");
+    };
+
+    function signupMode() {
+        $rootScope.signup = true;
+        $location.path("/signup");
+    }
+
+    function loginMode() {
+        $rootScope.signup = false;
+        $location.path("/login");
+    }
+
+
+}
+
+[/file]
+[/if]
+
+[/template]
+
+
+[query private getMainResources(anAnnotationStack: AnnotationStack): OrderedSet(JavaResourceModelManager) = 
+(anAnnotationStack.hasCorePSM.hasJavaRMManager-anAnnotationStack.hasCorePSM.hasJavaRMManager->intersection(anAnnotationStack.hasCorePSM.hasJavaRModel.hasRelatedJavaRMManager->asOrderedSet()))->asOrderedSet()
+/]
+
+[query private relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query private hasBothModeAuthentication(anHttpActivity : HTTPActivity, anAnnotationStack : AnnotationStack) : Boolean =
+	getAuthenticationLayerBothModeAnnotations(anAnnotationStack)->exists(bothModeAnnotation | bothModeAnnotation.HTTPActivityHasAuthenticationMode->exists(annHTTPActivity | annHTTPActivity.annotatesHTTPActivity.name = anHttpActivity.name))
+/]
+
+[query private getAuthenticationLayerBothModeAnnotations(anAnnotationStack : AnnotationStack) : Sequence(BothMode) =
+	anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(BothMode))->asSequence()
+/]

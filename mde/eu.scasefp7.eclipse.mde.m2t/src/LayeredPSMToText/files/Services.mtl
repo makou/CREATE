@@ -1,0 +1,161 @@
+[comment encoding = UTF-8 /]
+[module Services('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore')]
+
+
+[template public generateServices(anAnnotationStack : AnnotationStack)]
+
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/services/services.js', false, 'UTF-8')]
+
+/**
+* @ngdoc service
+* @name [anAnnotationStack.hasCorePSM.name/]App.service:dataService
+* @description:
+*
+* This is the service respοnsible for handling all HTTP requests and calling corrresponding function
+* If an authentication call is to be made, the headers are sent together
+**/
+
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .factory('dataService', dataService);
+
+function dataService($resource) {
+
+    var service = {
+        data: data,
+		[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+			dataAuth: dataAuth,
+		[/if]
+        
+        
+    };
+    return service;
+    
+    function data(uri) {
+
+        return $resource(uri,
+            {},
+            {
+                getall: { method: 'GET' },
+                save: { method: 'POST' },
+				delete: { method: 'DELETE'},
+                update: { method: 'PUT' }
+            })
+    };
+	[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+	function dataAuth(uri) {
+        return $resource(uri,
+            {},
+            {
+                getall: { method: 'GET', headers: headers },
+                save: { method: 'POST', headers: headers },
+                delete: { method: 'DELETE', headers: headers },
+                update: { method: 'PUT', headers: headers }
+            })
+    };
+	[/if]
+  
+};
+
+[/file]
+
+[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/services/authentication.service.js', false, 'UTF-8')]
+/**
+* @ngdoc service
+* @name [anAnnotationStack.hasCorePSM.name/]App.service:authenticationService
+* @description:
+*
+* This is the service respοnsible for the authentication function of the service
+**/
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .factory('authenticationService', Authentication);
+
+function Authentication($rootScope, config, $resource) {
+    var service = {
+
+        login: login,
+        setCredentials: setCredentials,
+        setHeader: setHeader,
+        clearCredentials: clearCredentials,
+    };
+    return service;
+	/**
+	* @ngdoc method
+	* @name login
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.service:authenticationService
+	* @description
+	*
+	* This method is called from the SigninController to login to the service
+	**/
+    function login() {
+        return $resource(config.signInUrl, {}, {
+            query: {
+                method: 'GET',
+				[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+				[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+				[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+				[if not(httpActivity.hasBothModeAuthentication(anAnnotationStack))]
+                headers: headers
+				[/if][/if][/for][/for]
+            }
+        })
+    };
+	/**
+	* @ngdoc method
+	* @name setCredentials
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.service:authenticationService
+	* @description
+	*
+	* This method is called from the SigninController in order to set the credentials of the current object of the rootscope
+	**/
+    function setCredentials(username, password) {
+        authdata = btoa(username + ':' + password);
+        $rootScope.globals = {
+            currentUser: {
+                username: username,
+                authdata: authdata
+            }
+        };
+        setHeader();
+    };
+
+    /*when the user is authenticated creates the header for further requests. */
+    function setHeader() {
+        headers = {
+            'Authorization': 'Basic ' + authdata,
+            'Content-Type': 'application/json'
+        }
+    };
+
+	/**
+	* @ngdoc method
+	* @name clearCredentials
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.service:authenticationService
+	* @description
+	*
+	* This method is called from the SigninController in order to clear the current object of the rootscope
+	**/
+    function clearCredentials() {
+        authdata = '';
+        $rootScope.globals = {};
+        headers = 'Basic';
+    };
+}
+[/file]
+[/if]
+
+[/template]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query private hasBothModeAuthentication(anHttpActivity : HTTPActivity, anAnnotationStack : AnnotationStack) : Boolean =
+	getAuthenticationLayerBothModeAnnotations(anAnnotationStack)->exists(bothModeAnnotation | bothModeAnnotation.HTTPActivityHasAuthenticationMode->exists(annHTTPActivity | annHTTPActivity.annotatesHTTPActivity.name = anHttpActivity.name))
+/]
+
+[query private getAuthenticationLayerBothModeAnnotations(anAnnotationStack : AnnotationStack) : Sequence(BothMode) =
+	anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(BothMode))->asSequence()
+/]

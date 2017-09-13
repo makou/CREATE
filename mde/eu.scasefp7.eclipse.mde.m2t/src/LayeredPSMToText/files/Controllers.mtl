@@ -1,0 +1,696 @@
+[comment encoding = UTF-8 /]
+[module Controllers('platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AnnotationLayerStack.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/AuthenticationPSMMetamodel.ecore', 'platform:/plugin/eu.scasefp7.eclipse.mde.m2m/Metamodels/PSMMetamodel.ecore')]
+
+
+[template public generateControllers(anAnnotationStack : AnnotationStack)]
+[comment This is controller for the main resources, resources that are not resource-related by others /]
+
+[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + p.parentName + '.controller.js', false, 'UTF-8')]
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+* @description:
+*
+*This is the controller respοnsible for the HTTP requests of a resource that is not resource-related by others.
+* 
+**/
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .value('[p.parentName/]URL', '')
+    .controller('[p.parentName.toUpperFirst()/]Controller', [p.parentName.toUpperFirst()/]);
+
+function [p.parentName.toUpperFirst()/]($scope, dataService, config, $filter, $location, $rootScope, $route, $window, Notification) {
+ 	var image;
+	$scope.model = {};
+    $scope.model.[p.parentName/]s = ['['/]];
+    $scope.onLoad = onLoad;
+	
+	$scope.editBoolean = false;
+	$scope.edit = function (editValue) {
+		$scope.editBoolean = editValue;
+		console.log($scope.editBoolean);
+	};
+
+
+	/**
+	* @ngdoc method
+	* @name onLoad
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for managing image objects
+	* 
+	**/
+	function onLoad(e, reader, file, fileList, fileOjects, fileObj) {
+        image = fileObj.base64;
+        document.getElementById('image').src = "data:image/jpg;base64," + fileObj.base64;
+    };
+	
+	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = p.parentName)]
+	/**
+	* @ngdoc method
+	* @name getAll[p.parentName.toUpperFirst()/]s
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for the GET HTTP request.It sends an HTTP GET request
+	* to retrieve data of the current resource. Then it stores the response data to the variable $scope.[p.parentName.toUpperFirst()/]s
+	**/
+	$scope.getAll[p.parentName.toUpperFirst()/]s = function() {
+        $scope.[p.parentName.toUpperFirst()/]s = dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](config.[p.parentName/]Url).getall()
+    };
+	[/if]
+	[/for]
+	[/for]
+	
+	[for (aJavaResourceController : JavaResourceControllerManager | anAnnotationStack.hasCorePSM.hasJavaRCManager)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRCManagerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'POST' and aJavaResourceController.parentName = p.parentName)]
+   	/**
+	* @ngdoc method
+	* @name submit[p.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for the POST HTTP request.It sends an HTTP POST request
+	* to save a new instance of the current resource. Then it redirects the user to the main page
+	**/
+	$scope.submit[p.parentName.toUpperFirst()/] = function(model) {
+        model.image = image
+		[for (c : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+		[if (c.parentName=p.parentName)]
+		[for (a : PSMComponentProperty | c.JavaRModelHasProperty)]
+		[if (a.type='Date')]
+		model.[a.name/] = $filter('date')(model.[a.name/], 'yyyy-MM-ddTHH:mm:ss')
+		[/if][/for][/if][/for]
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](config.[p.parentName/]Url).save(model, function (data) {          
+        $location.path("/");
+		})
+    };
+	[/if]
+	[/for]
+	[/for]
+
+
+	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'PUT' and aJavaResourceController.parentName = p.parentName)]
+	/**
+	* @ngdoc method
+	* @name update[p.parentName.toUpperFirst()/] 
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for the PUT HTTP request.It sends an HTTP PUT request
+	* to update an existing instance of the current resource. 
+	**/
+	$scope.updateRecipe = function (model, url) {
+		console.log(model + url)
+		dataService.dataAuth(url).update(model)
+	};
+	[/if]
+	[/for]
+	[/for]
+
+	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'DELETE' and aJavaResourceController.parentName = p.parentName)]
+	/**
+	* @ngdoc method
+	* @name delete[p.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for the DELETE HTTP request.It sends an HTTP DELETE request
+	* to delete an existing instance of the current resource. A confirmation box appears - $window.confirm -
+	*to prevent the user from mistakenly moving. On success the instance will be deleted and the page will 
+	*automatically be refreshed for the new list to appear. On error a notification message will appear
+	**/
+	$scope.delete[p.parentName.toUpperFirst()/] = function (uri){
+             if ($window.confirm("Are you sure you want to delete this [p.parentName.toUpperFirst()/]?")) {
+                    dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](uri).delete()
+                        .$promise.then(
+                        //on success
+                        function () {
+                            Notification.success("The [p.parentName.toUpperFirst()/] has been deleted successfully ")
+                            $route.reload();
+                        },
+                        //error
+                        function () { Notification.error("Error, Try again"); }
+                        )
+                }
+    };
+	[/if]
+	[/for]
+	[/for]
+
+	[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	$scope.submit[c.parentName.toUpperFirst()/] = function(model) {
+       	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+		[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+		[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = p.parentName)]  	
+		 dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if]($rootScope.[p.parentName/]Url.linkURI).getall(function (data) {
+		[/if][/for][/for]           
+ 		angular.forEach(data.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+						[comment TODO /]
+						[for (aJavaResourceController : JavaResourceControllerManager | anAnnotationStack.hasCorePSM.hasJavaRCManager)]
+						[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRCManagerHasHTTPActivity)]
+						[if (httpActivity.ActivityHTTPVerb.toString() = 'POST' and aJavaResourceController.parentName = c.parentName)]
+						dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](link.linkURI).save(model, function (data) {
+							$location.path("/[p.parentName/]Detail")
+						})
+                        [/if][/for][/for] 
+                    }
+                }
+            })
+        })
+    };
+	[/for]
+};
+
+[/file]
+[/for]
+
+[comment The controller for managing the resource used for authentication /]
+
+[if (anAnnotationStack.bHasAuthenticationAnnotation)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName + '.controller.js', false, 'UTF-8')]	
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+* @description:
+*
+*This is the controller responsible for the HTTP requests of the resource
+* which is used for the authentication
+*
+**/
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller', [anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]);
+
+function [anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]($scope, dataService, config, $rootScope, $location, $route, $routeParams, $window, Notification, authenticationService) {
+    $scope.model = {};
+    /**
+	* @ngdoc method
+	* @name get[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+	* @description
+	*
+	*This method is responsible for the GET HTTP request.It sends an HTTP GET request
+	* to retrieve data of the authentication resource. Then it stores the response data to the variable $scope.model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]
+	**/
+    $scope.get[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/] = function () {
+        $scope.model.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/] = dataService.dataAuth($rootScope.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]Url).getall();
+    };
+	/**
+	* @ngdoc method
+	* @name update[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+	* @description
+	*
+	* This method is responsible for the PUT HTTP request.It sends an HTTP PUT request
+	* to update an existing instance of the authentication resource. Once the data changes, the user is asked 
+	* to make again login.
+	**/
+    $scope.update[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/] = function (model) {
+        dataService.dataAuth($rootScope.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]Url).update(model)
+ 			.$promise.then(
+                //on success
+                function () {
+                    Notification.success("Please log in again")
+                    authenticationService.clearCredentials();
+                    $rootScope.isLogedIn = false;
+                    $location.path("/");
+
+                },
+                //error
+                function () { Notification.error("Error, Try again"); }
+                )
+        
+    };
+	/**
+	* @ngdoc method
+	* @name delete[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+	* @description
+	*
+	* This method is responsible for the DELETE HTTP request.It sends an HTTP DELETE request
+	* to delete an existing instance of the authentication resource. A confirmation box appears - $window.confirm -
+	* to prevent the user from mistakenly moving. On success the instance will be deleted and the credentials will be cleared
+	**/
+    $scope.delete[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/] = function (model) {
+            if ($window.confirm("Are you sure you want to delete your account?")) {
+                dataService.dataAuth($rootScope.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]Url).delete(model)
+                authenticationService.clearCredentials();
+                $rootScope.isLogedIn = false;
+                $location.path("/");
+                $route.reload();
+            }
+        };
+	[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+	[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p))]
+    /**
+	* @ngdoc method
+	* @name get[c.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+	* @description
+	*
+	* This method is responsible for retrieving [c.parentName.toUpperFirst()/] resource that are subresource of the authntication resource
+	* It searhcs in the linklist for those elements that has the linkType Child and the linkVerb GET and stores
+	* the result to the variable model.[c.parentName/]
+	**/
+	$scope.get[c.parentName.toUpperFirst()/] = function () {
+        dataService.dataAuth($rootScope.[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName/]Url).getall(function (response) {
+            angular.forEach(response.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    $scope.model.[c.parentName/] = dataService.dataAuth(link.linkURI).getall()
+                }
+            })
+        })
+    };
+    /**
+	* @ngdoc method
+	* @name delete[c.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName.toUpperFirst()/]Controller
+	* @description
+	*
+	* This method is responsible for deleting [c.parentName.toUpperFirst()/] resource that are subresource of the authntication resource
+	* A confirmation box appears - $window.confirm - to prevent the user from mistakenly moving.
+	**/
+	$scope.delete[c.parentName.toUpperFirst()/] = function(link) {
+        if ($window.confirm("Are you sure you want to delete this [c.parentName.toUpper()/]?")) {
+            dataService.dataAuth(link).delete()
+                .$promise.then(
+                //on success
+                function () {
+                    Notification.success("The [c.parentName.toUpperFirst()/] has been deleted successfully ")
+                    $route.reload();
+
+                },
+                //error
+                function () { Notification.error("Error, Try again"); }
+                )
+        }
+    };
+
+	[/for][/if][/for]
+
+	[for (p : JavaResourceModel | anAnnotationStack.hasCorePSM.hasJavaRModel)]
+	[if (p.parentName=anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]
+	[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p))]
+	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'PUT' and aJavaResourceController.parentName = c.parentName)]  	
+	$scope.submit[c.parentName.toUpperFirst()/] = function(model) {
+        dataService.dataAuth($rootScope.[p.parentName/]Url).getall(function (data) {
+            angular.forEach(data.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+						dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](link.linkURI).save(model)
+                        $location.path("/[p.parentName/]Detail")
+                    }
+                }
+            })
+        })
+    };
+	[/if]
+	[/for]
+	[/for]
+	[/for]
+	[/if]
+	[/for]
+}
+[/file]
+[/if]
+
+
+
+[for (p : JavaResourceModelManager | anAnnotationStack.getMainResources())]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + p.parentName + 'Detail.controller.js', false, 'UTF-8')]
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]DetailController
+* @description:
+*
+*This is a helper controller to join two controllers on one view
+*
+**/
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('[p.parentName/]DetailController', [p.parentName/]Details);
+
+
+function [p.parentName/]Details($scope, dataService, $location, $window, $rootScope, $route) {
+    $scope.model = {};
+    links = ['['/]];
+    $scope.image;
+   
+
+    $scope.get[p.parentName.toUpperFirst()/]Details = function ([p.parentName/]URI) {
+        $scope.model.[p.parentName/] = dataService.data([p.parentName/]URI).getall(function (callbackdata) {
+        $scope.image = "data:image/jpg;base64," + $scope.model.[p.parentName/].image
+        })
+    };
+    /**
+	* @ngdoc method
+	* @name [p.parentName/]Detail 
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]DetailController
+	* @description
+	*
+	* This method is responsible for the navigation to the page containing the information of the subresources
+	* Stores the URL of the current object in a variable $rootScope.[p.parentName/]Url and redirect the user
+	**/
+ 	$scope.[p.parentName/]Detail = function([p.parentName/]) {
+        $location.path("/[p.parentName/]Detail");
+        var checkResponse = angular.isUndefined([p.parentName/].linklist)
+        if (checkResponse == true) {
+            $rootScope.[p.parentName/]Url = [p.parentName/]
+        } else {
+            angular.forEach([p.parentName/].linklist, function (obj) {
+                if (obj.linkType == 'Sibling') {
+                    $rootScope.[p.parentName/]Url = obj
+                }
+            })
+        }
+    };   
+}
+
+[/file]
+
+[comment This controller is responsible for resources that are relevant to another resource/]
+
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + p.parentName + 'View.controller.js', false, 'UTF-8')]
+/**
+* @ngdoc controller
+* @name [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]ViewController
+* @description:
+*
+*	This controller is responsible for resources that are subresources of a resource. 
+*
+**/	
+angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('[p.parentName/]ViewController', [p.parentName/]View);
+
+
+function [p.parentName/]View($scope, $location, $window, $rootScope, $route, dataService, config, Notification) {
+    $scope.model = {};
+    $scope.details = details;
+	[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	[c.parentName/]Links = ['['/]];
+	$scope.[c.parentName/]s = ['['/]];
+	$scope.get[c.parentName.toUpperFirst()/]Detail = get[c.parentName.toUpperFirst()/]Detail;
+	[/for]
+	var current[p.parentName.toUpperFirst()/] = $rootScope.[p.parentName/]Url
+   
+
+    /**
+	* @ngdoc method
+	* @name details
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]ViewController
+	* @description
+	*
+	* This method is responsible for the details of a main resource. Only if the main resource has children 
+	* Starts from the main resource address and through a repetitive process finds the children of the resource and calls a 
+	* function to retrieve the information about the children of the resource
+	**/
+    function details() {
+	[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+	[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+	[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = p.parentName)]
+        $scope.model.detail = dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (anAnnotationStack.getMainResources()->size() = 1)][if (anAnnotationStack.getMainResources()->at(1).parentName = anAnnotationStack.getAuthenticationPerformer().authenticationModelParentName)]data[else][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]dataAuth[else]data[/if]($rootScope.[p.parentName/]Url.linkURI)[/if][else]dataAuth($rootScope.[p.parentName/]Url.linkURI)[/if][else]data($rootScope.[p.parentName/]Url.linkURI)[/if].getall(function (callbackdata) {
+	[/if][/for][/for]           
+ 		$scope.image = "data:image/jpg;base64," + $scope.model.detail.image
+            angular.forEach(callbackdata.linklist, function (link) {
+			[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+						[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+						[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+						[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = c.parentName and self.name=aJavaResourceController.firstOnly(httpActivity.ActivityHTTPVerb.toString()))]
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if(httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](link.linkURI).getall(function (callbackdata) {
+                         [/if][/for][/for]    
+							angular.forEach(callbackdata.linklist, function (link) {
+                                if (link.linkType == 'Child') {
+                                    [c.parentName/]Links.push(link.linkURI)
+                                }
+                            })
+							for (i = 0; i < [c.parentName/]Links.length; i++) {
+                                get[c.parentName.toUpperFirst()/]Detail([c.parentName/]Links['['/]i])
+                            }
+                        })
+                    }
+				}
+			[/for]
+            })
+        })
+    };
+	[comment GET sub resources /]
+	
+   [for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+	
+    /**
+	* @ngdoc method
+	* @name get[c.parentName.toUpperFirst()/]Detail
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]ViewController
+	* @description
+	*
+	* This method is responsible for retrieving the information of the sub resource [c.parentName.toUpperFirst()/].
+	* It sends an HTTP GET request and stores it in the array [c.parentName/]s
+	**/
+	function get[c.parentName.toUpperFirst()/]Detail(url) {
+		[for (aJavaResourceController : JavaResourceController | anAnnotationStack.hasCorePSM.hasJavaRController)]
+		[for (httpActivity : HTTPActivity | aJavaResourceController.JavaRControllerHasHTTPActivity)]
+		[if (httpActivity.ActivityHTTPVerb.toString() = 'GET' and aJavaResourceController.parentName = c.parentName and aJavaResourceController.parentName = c.parentName and self.name=aJavaResourceController.firstOnly(httpActivity.ActivityHTTPVerb.toString()))]
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)][if (httpActivity.hasBothModeAuthentication(anAnnotationStack))]data[else]dataAuth[/if][else]data[/if](url).getall(function([c.parentName/]){
+		[/if][/for][/for]   
+		$scope.[c.parentName/]s.push([c.parentName/])
+		})	
+    };
+
+	$scope.create[c.parentName.toUpperFirst()/] = function () {
+        $location.path("/new[c.parentName.toUpperFirst()/]");
+    }
+
+	[comment DELETE /]
+	 /**
+	* @ngdoc method
+	* @name delete[c.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]ViewController
+	* @description
+	*
+	* This method is responsible for retrieving the information of the sub resource [c.parentName.toUpperFirst()/].
+	* It sends an HTTP DELETE request and deletes an instance of [c.parentName.toUpperFirst()/] resource
+	**/
+	$scope.delete[c.parentName.toUpperFirst()/] = function (item) {
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if]($rootScope.[p.parentName/]Url.linkURI).getall(function (callbackdata) {
+            angular.forEach(callbackdata.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).getall(function (callbackdata) {
+                            angular.forEach(callbackdata.linklist, function (link) {
+                                if (link.idType == item) {
+                                    console.log(link.linkURI)
+                                    if ($window.confirm("Are you sure you want to delete this [c.parentName/]?")) {
+                                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).delete()
+                                            .$promise.then(
+                                            //on success
+                                            function () {
+                                                Notification.success("The [c.parentName/] has been deleted successfully ")
+                                                $route.reload();
+                                          },
+                                            //error
+                                            function () { Notification.error("Error, Try again"); }
+                                            )
+                                    }
+                                }
+                            })
+                        })
+                    }
+                }
+            })
+        })
+    };
+
+	[comment PUT /]
+	/**
+	* @ngdoc method
+	* @name update[c.parentName.toUpperFirst()/]
+	* @methodOf [anAnnotationStack.hasCorePSM.name/]App.controller:[p.parentName/]ViewController
+	* @description
+	*
+	* This method is responsible for updating the information of the sub resource [c.parentName.toUpperFirst()/].
+	* It sends an HTTP PUT request and updates an instance of [c.parentName.toUpperFirst()/] resource
+	**/
+	 $scope.update[c.parentName.toUpperFirst()/] = function(model, item) {
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if]($rootScope.[p.parentName/]Url.linkURI).getall(function (data) {
+            angular.forEach(data.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).getall(function (data) {
+                            angular.forEach(data.linklist, function (link) {
+                               if (link.idType == item) {
+                                    dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).update(model)
+                                    $route.reload();
+                                }
+                            })
+                        })
+                    }
+                }
+            })
+        })
+    };
+	[/for]
+
+	
+}
+[/file]
+
+[for (aRJResource : JavaResourceModelManager | anAnnotationStack.relatedResource(p.hasRelatedJavaRModel))]
+[if (anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel)->size()>0)]
+[file ('/' + anAnnotationStack.hasCorePSM.name + 'Client/js/controllers/' + aRJResource.parentName + 'View.controller.js', false, 'UTF-8')]
+	angular
+    .module('[anAnnotationStack.hasCorePSM.name/]App')
+    .controller('[aRJResource.parentName/]ViewController', [aRJResource.parentName/]View);
+
+
+function [aRJResource.parentName/]View($scope, $location, $window, $rootScope, $route, dataService, config, Notification) {
+    $scope.model = {};
+    $scope.details = details;
+	[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel))]
+	[c.parentName/]Links = ['['/]];
+	$scope.[c.parentName/]s = ['['/]];
+	$scope.get[c.parentName.toUpperFirst()/]Detail = get[c.parentName.toUpperFirst()/]Detail;
+	[/for]
+
+
+   
+    function details() {
+        var current[aRJResource.parentName.toUpperFirst()/] = $rootScope.[aRJResource.parentName/]
+        $scope.model.detail = dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](current[aRJResource.parentName.toUpperFirst()/].linkURI).getall(function (callbackdata) {
+            $scope.image = "data:image/jpg;base64," + $scope.model.detail.image
+            angular.forEach(callbackdata.linklist, function (link) {
+			[for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel))]
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).getall(function (callbackdata) {
+                            angular.forEach(callbackdata.linklist, function (link) {
+                                if (link.linkType == 'Child') {
+                                    console.log(link.linkURI)
+                                    [c.parentName/]Links.push(link.linkURI)
+                                }
+                            })
+							for (i = 0; i < [c.parentName/]Links.length; i++) {
+                                get[c.parentName.toUpperFirst()/]Detail([c.parentName/]Links['['/]i])
+                            }
+                        })
+                    }
+				}
+			[/for]
+            })
+        })
+    };
+	[comment GET sub resources /]
+	
+   [for (c : JavaResourceModelManager | anAnnotationStack.relatedResource(aRJResource.hasRelatedJavaRModel))]
+	function get[c.parentName.toUpperFirst()/]Detail(url) {
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](url).getall(function([c.parentName/]){
+		 $scope.[c.parentName/]s.push([c.parentName/])
+		})	
+    };
+	
+	$scope.create[c.parentName.toUpperFirst()/] = function () {
+        $location.path("/new[c.parentName.toUpperFirst()/]");
+    }
+
+	[comment DELETE /]
+	
+	$scope.delete[c.parentName.toUpperFirst()/] = function (item) {
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if]($rootScope.[aRJResource.parentName/].linkURI).getall(function (callbackdata) {
+            angular.forEach(callbackdata.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).getall(function (callbackdata) {
+                            angular.forEach(callbackdata.linklist, function (link) {
+                                if (link.idType == item) {
+                                    console.log(link.linkURI)
+                                    if ($window.confirm("Are you sure you want to delete this [c.parentName/]?")) {
+                                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).delete()
+                                            .$promise.then(
+                                            //on success
+                                            function () {
+                                                Notification.success("The [c.parentName/] has been deleted successfully ")
+                                                $route.reload();
+                                          },
+                                            //error
+                                            function () { Notification.error("Error, Try again"); }
+                                            )
+                                    }
+                                }
+                            })
+                        })
+                    }
+                }
+            })
+        })
+    };
+
+	[comment PUT /]
+	
+	 $scope.update[c.parentName.toUpperFirst()/] = function(model, item) {
+        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if]($rootScope.[aRJResource.parentName/].linkURI).getall(function (data) {
+            angular.forEach(data.linklist, function (link) {
+                if (link.linkType == 'Child' && link.linkVerb == 'GET') {
+                    if (link.linkURI.substr(link.linkURI.lastIndexOf('/') + 1) == '[c.parentName/]') {
+                        dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).getall(function (data) {
+                            angular.forEach(data.linklist, function (link) {
+                               if (link.idType == item) {
+                                    dataService.[if (anAnnotationStack.bHasAuthenticationAnnotation)]dataAuth[else]data[/if](link.linkURI).update(model)
+                                    $route.reload();
+                                }
+                            })
+                        })
+                    }
+                }
+            })
+        })
+    };
+	[/for]
+
+	
+}
+[/file]
+[/if]
+[/for]
+[/for]
+[/template]
+
+[query private hasBothModeAuthentication(anHttpActivity : HTTPActivity, anAnnotationStack : AnnotationStack) : Boolean =
+getAuthenticationLayerBothModeAnnotations(anAnnotationStack)->exists(bothModeAnnotation | bothModeAnnotation.HTTPActivityHasAuthenticationMode->exists(annHTTPActivity | annHTTPActivity.annotatesHTTPActivity.name = anHttpActivity.name))
+/]
+
+[query private getAuthenticationLayerBothModeAnnotations(anAnnotationStack : AnnotationStack) : Sequence(BothMode) =
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select( annotation | annotation.oclIsTypeOf(BothMode))->asSequence()
+/]
+
+[query private getAuthenticationPerformer(anAnnotationStack : AnnotationStack) : AuthenticationPerformer = 
+anAnnotationStack.hasAuthenticationLayer.hasAnnotation->select(annotation | annotation.oclIsTypeOf(AuthenticationPerformer))->at(1)
+/]
+
+[query private relatedResource(anAnnotationStack : AnnotationStack, p: JavaResourceModel ) : OrderedSet(JavaResourceModelManager) = 
+anAnnotationStack.hasCorePSM.hasJavaRCManager.hasAssociatedRMManager->asOrderedSet()->intersection(p.hasRelatedJavaRMManager)->asOrderedSet()
+/]
+
+[query private getMainResources(anAnnotationStack: AnnotationStack): OrderedSet(JavaResourceModelManager) = 
+(anAnnotationStack.hasCorePSM.hasJavaRMManager-anAnnotationStack.hasCorePSM.hasJavaRMManager->intersection(anAnnotationStack.hasCorePSM.hasJavaRModel.hasRelatedJavaRMManager->asOrderedSet()))->asOrderedSet()
+/]
+
+[query private firstOnly(c: JavaResourceController,e: String): String =
+  c.JavaRControllerHasHTTPActivity->select(s: HTTPActivity | s.ActivityHTTPVerb.toString()=e)->asSequence()->first().name
+/]
