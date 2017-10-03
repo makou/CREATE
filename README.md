@@ -1,4 +1,7 @@
 # CREATE
+
+CREATE (Client for RESTful API automated Engine) automatically provides graphical interfaces fully adaptable to the structure of a RESTful API, which is produced through the S-CASE platform. The client application produced should be ready to run and should support CRUD requests and responses, authentication, database search and communication with external services.
+
 To run the project, download the entire project that is in the mde folder. Then, import the folder to Eclipse IDE. To install the MDE-GUI, right-click Run As-> maven install. When the project is built successfully, right-click Run As-> Run configurations ...-> Eclipse Application. In the MDE-GUI window, select the output folder and enter the name of the service. Give the correct information for the communication with the database, PostgreSQL or MySQL, such as port, username and password. Finally, the 'Reload Previous Service models' option must be selected and, depending on the functionality of the service, also mark the "Add Basic Authentication", "Add Database Searching" and "Add External Compositions". Click on Generate code button and you will find the generated files in the selected output folder.
 
 Download and add the lib folder, containing the necessary libraries for the generated application to work. The final structure of the generated application folder should have a 'templates' folder, a 'js' folder, the file index.html and finally the 'lib' folder.
